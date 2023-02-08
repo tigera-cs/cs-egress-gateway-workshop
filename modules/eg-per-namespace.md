@@ -9,7 +9,9 @@ This lab will demonstrate Egress Gateway per namespace; it includes the followin
 3. Enable BGP with upstream routers (Bird) and advertise the Egress Gateway IP Pool
 4.  Test and Verify the communication
 
-## Enable egress gateway support on a per-namespace basis
+## Deploy and Configure Egress Gateway
+
+### Enable egress gateway support on a per-namespace basis
 
 Patch felix configuration to support per namespace egress gateway support
 
@@ -18,7 +20,7 @@ kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespace"}}'
 ```
 
-## Create an `IPPool`
+### Create an `IPPool`
 
 Create an IP Pool for Egress Gateway Pod
 
@@ -35,7 +37,7 @@ spec:
 EOF
 ```
 
-## Apply Calico Enterprise pull secret to egress gateway namespace:
+### Apply Calico Enterprise pull secret to egress gateway namespace:
 
 Create a pull secret into egress gateway namespace
 
@@ -45,7 +47,7 @@ kubectl create secret generic egress-pull-secret \
   --type=kubernetes.io/dockerconfigjson -n app1
 ```
 
-## Deploy Egress Gateway
+### Deploy Egress Gateway
 
 Provision an Egress Gateway deployment for the `app1` namespace using the `egress-code: red` label. The `IPPool` assigned to the Egress Gateway is specified using the `cni.projectcalico.org/ipv4pools: "[\"10.50.0.0/31\"]"` annotation. It is also possible to set the `IPPool` using its name (e.g. egress-ippool-1). 
 
@@ -145,13 +147,13 @@ spec:
 EOF
 ```
 
-## 8.2.2. Connect the namespace to the gateways it should use
+### Annotate the Namespace to use an Egress Gateway
 
 ```
 kubectl annotate ns app1 egress.projectcalico.org/selector='egress-code == "red"'
 ```
 
-### 8.2.3. Verify both, the POD and Egress Gateway
+### Verify the POD and Egress Gateway
 
 ```
 kubectl get pods -n app1 -o wide 
@@ -165,11 +167,11 @@ egress-gateway-jc4wm               1/1     Running   0          40s   10.50.0.1 
 egress-gateway-n2zh2               1/1     Running   0          40s   10.50.0.0     ip-10-0-1-31.ca-central-1.compute.internal   <none>           <none>
 ```
 
-## 8.3. BGP
+## Configure BGP
 
-### 8.3.1. BGP configuration on Calico
+### BGP configuration on Calico
 
-Deploy the needed BGP config, so we route our traffic to the bastion host through the egress gateway:
+Configure BGP to route traffic to the bastion host through the egress gateway.
 
 ```
 kubectl apply -f -<<EOF
@@ -199,7 +201,7 @@ spec:
 EOF
 ```
 
-### 8.3.2. Check Calico Nodes connect to the bastion host
+### Check Calico Nodes connect to the bastion host
 
 Our bastion host is simulating our ToR switch, and it should have BGP sessions established to all nodes:
 
@@ -236,9 +238,9 @@ default via 10.0.1.1 dev ens5 proto dhcp src 10.0.1.10 metric 100
 10.50.0.1 via 10.0.1.30 dev ens5 proto bird 
 ```
 
-## 8.4. Verification
+## Verification
 
-### 8.4.1. Test and verify Egress Gateway in action
+### Test and verify Egress Gateway in action
 
 Open a second browser to your lab (`<LABNAME>.lynx.tigera.ca`) if not already done so that we have an additional terminal to test the egress gateway.
 
@@ -275,7 +277,7 @@ listening on ens5, link-type EN10MB (Ethernet), capture size 262144 bytes
 07:51:50.709346 IP ip-10-0-1-10.ca-central-1.compute.internal.7777 > ip-10-50-0-0.ca-central-1.compute.internal.41521: Flags [R.], seq 0, ack 1965935314, win 0, length 0
 ```
 
-### 8.4.2. Routing info on the Calico Node where App Workload is running
+### Routing info on the Calico Node where App Workload is running
 
 Login to worker node where the egress gateway and pods were deployed:
 
