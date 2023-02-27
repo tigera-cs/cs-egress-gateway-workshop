@@ -9,15 +9,22 @@ This lab will demonstrate Egress Gateway per namespace; it includes the followin
 3. Enable BGP with upstream routers (Bird) and advertise the Egress Gateway IP Pool
 4.  Test and Verify the communication
 
-## Deploy and Configure Egress Gateway
+## Deploy and configure egress gateway
 
-### Enable egress gateway support on a per-namespace basis
+### Enable egress gateway per namespace
 
 Patch felix configuration to support per namespace egress gateway support
 
 ```
 kubectl patch felixconfiguration.p default --type='merge' -p \
     '{"spec":{"egressIPSupport":"EnabledPerNamespace"}}'
+```
+
+### Enable policy sync API
+
+```
+kubectl patch felixconfiguration.p default --type='merge' -p \
+    '{"spec":{"policySyncPathPrefix":"/var/run/nodeagent"}}'
 ```
 
 ### Create an `IPPool`
@@ -37,17 +44,17 @@ spec:
 EOF
 ```
 
-### Apply Calico Enterprise pull secret to egress gateway namespace:
+### Apply pull-secret
 
 Create a pull secret into egress gateway namespace
 
 ```
-kubectl create secret generic egress-pull-secret \
-  --from-file=.dockerconfigjson=/home/tigera/config.json \
-  --type=kubernetes.io/dockerconfigjson -n app1
+kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
+   grep -v '^[[:space:]]*namespace:[[:space:]]*calico-system' | \
+   kubectl apply --namespace=app1 -f -
 ```
 
-### Deploy Egress Gateway
+### Deploy egress gateway
 
 Provision an Egress Gateway deployment for the `app1` namespace using the `egress-code: red` label. The `IPPool` assigned to the Egress Gateway is specified using the `cni.projectcalico.org/ipv4pools: "[\"10.50.0.0/31\"]"` annotation. It is also possible to set the `IPPool` using its name (e.g. egress-ippool-1). 
 
@@ -201,7 +208,7 @@ spec:
 EOF
 ```
 
-### Check Calico Nodes connect to the bastion host
+### Verify BGP Peering
 
 Our bastion host is simulating our ToR switch, and it should have BGP sessions established to all nodes:
 
@@ -240,7 +247,7 @@ default via 10.0.1.1 dev ens5 proto dhcp src 10.0.1.10 metric 100
 
 ## Verification
 
-### Test and verify Egress Gateway in action
+### Verify Egress Gateway
 
 Open a second browser to your lab (`<LABNAME>.lynx.tigera.ca`) if not already done so that we have an additional terminal to test the egress gateway.
 
@@ -313,6 +320,6 @@ default onlink
 
 You can close the second browser tab with the terminal now as we will not use it for the rest of the labs.
 
-## Conclusion
+## Summary
 
-In this lab we observed how we can successfully setup egress gateway in a calico cluster and share routing information with external routing device over BGP.
+This lab demonstrated how to deploy Calico egress gateway and test its functionality by peering to an external BGP router. 
