@@ -2,18 +2,18 @@
 
 ## Introduction
 
-This lab will demonstrate Egress Gateway per namespace; it includes the following tasks.    
+This lab will demonstrate egress gateway per namespace deployment. It includes the following tasks. 
 
-1. Enable per namespace Egress Gateway support
-2. Deploy an Egress Gateway in *one* namespace
-3. Enable BGP with upstream routers (Bird) and advertise the Egress Gateway IP Pool
+1. Enable egress gateway per namespace
+2. Deploy egress gateway in `apps` namespace
+3. Configure BGP peering with the upstream router and advertise egress gateway IP pools. 
 4.  Test and Verify the communication
 
 ## Deploy and configure egress gateway
 
 ### Enable egress gateway per namespace
 
-Patch felix configuration to support per namespace egress gateway support
+Patch Felix configuration to support egress gateway per namespace
 
 ```
 kubectl patch felixconfiguration.p default --type='merge' -p \
@@ -51,12 +51,13 @@ Create a pull secret into egress gateway namespace
 ```
 kubectl get secret tigera-pull-secret --namespace=calico-system -o yaml | \
    grep -v '^[[:space:]]*namespace:[[:space:]]*calico-system' | \
-   kubectl apply --namespace=app1 -f -
+   kubectl apply --namespace=apps -f -
 ```
 
 ### Deploy egress gateway
 
-Provision an Egress Gateway deployment for the `app1` namespace using the `egress-code: red` label. The `IPPool` assigned to the Egress Gateway is specified using the `cni.projectcalico.org/ipv4pools: "[\"10.50.0.0/31\"]"` annotation. It is also possible to set the `IPPool` using its name (e.g. egress-ippool-1). 
+Deploy egress gateway in the `apps` namespace using the `egress-code: per-ns` label. The `IPPool` for the egress gateway deployment is specified using the `cni.projectcalico.org/ipv4pools: "[\"10.50.0.0/31\"]"` annotation. It is also possible to set the `IPPool` using its name (e.g. egress-ippool-1).
+
 
 ```
 kubectl apply -f - <<EOF
@@ -64,20 +65,20 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: egress-gateway
-  namespace: app1 
+  namespace: apps 
   labels:
-    egress-code: red
+    egress-code: per-ns
 spec:
   replicas: 1
   selector:
     matchLabels:
-      egress-code: red
+      egress-code: per-ns
   template:
     metadata:
       annotations:
         cni.projectcalico.org/ipv4pools: "[\"10.50.0.0/31\"]"
       labels:
-        egress-code: red
+        egress-code: per-ns
     spec:
       imagePullSecrets:
       - name: tigera-pull-secret
@@ -157,21 +158,19 @@ EOF
 ### Annotate the Namespace to use an Egress Gateway
 
 ```
-kubectl annotate ns app1 egress.projectcalico.org/selector='egress-code == "red"'
+kubectl annotate ns apps egress.projectcalico.org/selector='egress-code == "per-ns"'
 ```
 
 ### Verify the POD and Egress Gateway
 
 ```
-kubectl get pods -n app1 -o wide 
-```
-```
-tigera@bastion:~$ kubectl get pods -n app1 -o wide 
-NAME                               READY   STATUS    RESTARTS   AGE   IP            NODE                                         NOMINATED NODE   READINESS GATES
-app1-deployment-5bbfd76f9d-2zrdt   1/1     Running   0          7d    10.48.0.80    ip-10-0-1-30.ca-central-1.compute.internal   <none>           <none>
-app1-deployment-5bbfd76f9d-pxlx8   1/1     Running   0          7d    10.48.0.203   ip-10-0-1-31.ca-central-1.compute.internal   <none>           <none>
-egress-gateway-jc4wm               1/1     Running   0          40s   10.50.0.1     ip-10-0-1-30.ca-central-1.compute.internal   <none>           <none>
-egress-gateway-n2zh2               1/1     Running   0          40s   10.50.0.0     ip-10-0-1-31.ca-central-1.compute.internal   <none>           <none>
+tigera@bastion:~$ kubectl get pods -n apps -o wide 
+NAME                              READY   STATUS    RESTARTS   AGE   IP            NODE                                         NOMINATED NODE   READINESS GATES
+app1-786b5b9b7f-fgw6h             1/1     Running   0          14m   10.48.0.83    ip-10-0-1-30.ca-central-1.compute.internal   <none>           <none>
+app1-786b5b9b7f-rdgdg             1/1     Running   0          14m   10.48.0.245   ip-10-0-1-31.ca-central-1.compute.internal   <none>           <none>
+app2-77c4f547ff-5744g             1/1     Running   0          13m   10.48.0.247   ip-10-0-1-31.ca-central-1.compute.internal   <none>           <none>
+app2-77c4f547ff-cts6r             1/1     Running   0          13m   10.48.0.85    ip-10-0-1-30.ca-central-1.compute.internal   <none>           <none>
+egress-gateway-658b647cc4-ls6lm   1/1     Running   0          35s   10.50.0.0     ip-10-0-1-31.ca-central-1.compute.internal   <none>           <none>
 ```
 
 ## Configure BGP
@@ -210,7 +209,7 @@ EOF
 
 ### Verify BGP Peering
 
-Our bastion host is simulating our ToR switch, and it should have BGP sessions established to all nodes:
+The bastion host is simulating a ToR switch, and it should have BGP peerings `establisehd` with all the nodes. 
 
 ```
 sudo birdc show protocols
@@ -249,21 +248,19 @@ default via 10.0.1.1 dev ens5 proto dhcp src 10.0.1.10 metric 100
 
 ### Verify Egress Gateway
 
-Open a second browser to your lab (`<LABNAME>.lynx.tigera.ca`) if not already done so that we have an additional terminal to test the egress gateway.
-
-On that terminal, start a tcpdump in the bastion host to listen to traffic on a specific port:
+Open a second browser tab and navigate to your lab (`<LABNAME>.lynx.tigera.ca`) and start a `tcpdump` in the bastion host to listen to traffic on a specific port:
 
 ```
  sudo tcpdump -ni ens5 port 7777
 ```
 
-On the original terminal window, exec into any of the pods in the app1 namespace.
+On the original terminal window, exec into any of the pods in the apps namespace.
 
 ```
-APP1_POD=$(kubectl get pod -n app1 --no-headers -o name | head -1) && echo $APP1_POD
+APP1_POD=$(kubectl get pod -n apps --no-headers -o name | grep -i app1 | head -1) && echo $APP1_POD
 ```
 ```
-kubectl exec -ti $APP1_POD -n app1 -- sh
+kubectl exec -ti $APP1_POD -n apps -- sh
 ```
 
 And try to connect to the port in the bastion host.
@@ -277,11 +274,11 @@ Type `exit` to exit out the pod terminal.
 Go to the terminal where that you ran teh tcpdump utility on the bastion node. You should see an output saying you connected from the IP of one of the egress gateway, instead of the original pod address:
 
 ```
-$ sudo tcpdump -i ens5 port 7777
+tigera@bastion:~$  sudo tcpdump -ni ens5 port 7777
 tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
 listening on ens5, link-type EN10MB (Ethernet), capture size 262144 bytes
-07:51:50.709295 IP ip-10-50-0-0.ca-central-1.compute.internal.41521 > ip-10-0-1-10.ca-central-1.compute.internal.7777: Flags [S], seq 1965935313, win 62727, options [mss 8961,sackOK,TS val 4198299208 ecr 0,nop,wscale 7], length 0
-07:51:50.709346 IP ip-10-0-1-10.ca-central-1.compute.internal.7777 > ip-10-50-0-0.ca-central-1.compute.internal.41521: Flags [R.], seq 0, ack 1965935314, win 0, length 0
+14:30:37.988383 IP 10.50.0.0.36851 > 10.0.1.10.7777: Flags [S], seq 587933189, win 62727, options [mss 8961,sackOK,TS val 3507190559 ecr 0,nop,wscale 7], length 0
+14:30:37.988405 IP 10.0.1.10.7777 > 10.50.0.0.36851: Flags [R.], seq 0, ack 587933190, win 0, length 0
 ```
 
 ### Routing info on the Calico Node where App Workload is running
@@ -322,4 +319,4 @@ You can close the second browser tab with the terminal now as we will not use it
 
 ## Summary
 
-This lab demonstrated how to deploy Calico egress gateway and test its functionality by peering to an external BGP router. 
+This lab demonstrated how to deploy Calico egress gateway and test its functionality by peering with an external BGP router. 
