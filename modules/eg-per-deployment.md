@@ -249,52 +249,11 @@ EOF
 
 ### Apply annotation to the app1 deployment
 
-```
-kubectl annotate deployment app1  -n apps egress.projectcalico.org/selector='egress-code == "app1"'
 
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  annotations:
-    egress.projectcalico.org/selector: egress-code == "app1"
-  name: app1
-  namespace: apps
-  labels:
-    app: app1
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: app1
-  template:
-    metadata:
-      annotations:
-        egress.projectcalico.org/selector: egress-code == "app1"
-      labels:
-        app: app1
-    spec:
-      containers:
-      - name: app1
-        image: praqma/network-multitool
-        env:
-        - name: HTTP_PORT
-          value: "1180"
-        - name: HTTPS_PORT
-          value: "11443"
-        ports:
-        - containerPort: 1180
-          name: http-port
-        - containerPort: 11443
-          name: https-port
-        resources:
-          requests:
-            cpu: "1m"
-            memory: "20Mi"
-          limits:
-            cpu: "10m"
-            memory: "20Mi"
----
 ```
+kubectl patch deployment app1 -n apps -p '{"spec": {"template":{"metadata":{"annotations":{"egress.projectcalico.org/selector":"egress-code == \"app1\""}}}} }'
+```
+
 ```
 kubectl patch deployment app2 -n apps -p '{"spec": {"template":{"metadata":{"annotations":{"egress.projectcalico.org/selector":"egress-code == \"app2\""}}}} }'
 ```
