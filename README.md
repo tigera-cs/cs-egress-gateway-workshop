@@ -1,4 +1,6 @@
-# cs-egress-gateway-workshop
+# Egress Controls for Kubernetes Workloads
+
+Design and deploy Calico Egress Gateway to extend workload identity beyond Kubernetes clusters for security and networking.
 
 ### **Module 01 - Kuberenetes Egress**
 
