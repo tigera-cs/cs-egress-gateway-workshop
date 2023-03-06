@@ -5,6 +5,7 @@ Design and deploy Calico Egress Gateway to extend workload identity beyond Kuber
 ### **Module 01 - Kuberenetes Egress**
 
 - [Lesson - Kubernetes Egress Introduction](https://github.com/tigera-cs/cs-egress-gateway-workshop/blob/main/modules/k8-egress-intro.md)
+- [Lesson - Calico Egress Gateway](https://github.com/tigera-cs/cs-egress-gateway-workshop/blob/main/modules/calico-egw.md)
 
 ### **Module 02 - Calico Egress Gateway Deployment**
 
