@@ -14,7 +14,7 @@ Consider an example in which pods in the cluster connect to an external database
 
 ### `natOutgoing: false`
 
-`natOutgoing: false` can be used if the POD CIDRs are routable in the network. The communications will retain the IP address of the pod as it egresses the cluster. `natOutgoing: false` is an `IPPOOL` configuration parameter in Calico. 
+`natOutgoing: false` can be used if the pod CIDRs are routable in the network. The communications will retain the IP address of the pod as it egresses the cluster. `natOutgoing: false` is an `IPPOOL` configuration parameter in Calico. 
 
 Consider the same scenario in which pods in the cluster connect to an external database server. In such a scenario, the cluster pod CIDR must be permitted in upstream network firewalls. 
 
