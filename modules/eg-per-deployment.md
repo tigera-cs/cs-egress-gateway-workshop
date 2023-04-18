@@ -8,6 +8,7 @@ This lab will demonstrate egress gateway per deployment; it includes the followi
 2. Create IP pools for `app1` and `app2` deployments
 2. Deploy egress gateways 
 
+![egw-intro](images/egw-per-deployment.png)
 
 ## Configure egress gateway
 
