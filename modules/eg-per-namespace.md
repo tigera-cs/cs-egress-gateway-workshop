@@ -9,6 +9,8 @@ This lab will demonstrate egress gateway per namespace deployment. It includes t
 3. Configure BGP peering with the upstream router and advertise egress gateway IP pools. 
 4.  Test and Verify the communication
 
+![egw-intro](images/egw-per-namespace.png)
+
 ## Deploy and configure egress gateway
 
 ### Enable egress gateway per namespace
