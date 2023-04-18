@@ -1,5 +1,7 @@
 # Lesson -  Introduction
 
+## Workshop Introduction
+
 As more organizations embrace containerization and adopt Kubernetes, they reap the benefits of platform scalability, application portability, and optimized infrastructure utilization. However, with this shift comes a new set of security challenges related to enabling connectivity for applications in heterogeneous environments.
 
 In this workshop, we'll examine how the Calico Egress Gateway can help mitigate these issues by providing robust access control. By using Calico Egress Gateway, enterprises can secure communication from their Kubernetes workloads to the internet, 3rd party applications and networks while maintaining a high level of security.
