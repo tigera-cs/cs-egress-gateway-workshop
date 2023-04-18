@@ -1,5 +1,7 @@
 # Egress Controls for Kubernetes Workloads
 
+<img src="/modules/images/Calico_Cloud_logo_badge.svg" width="300" height="300">
+
 Design and deploy Calico Egress Gateway to extend workload identity beyond Kubernetes clusters for security and networking.
 
 ### **Module 01 - Kuberenetes Egress**
