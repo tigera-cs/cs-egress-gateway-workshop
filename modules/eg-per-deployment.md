@@ -310,15 +310,3 @@ EOF
 This lab demonstrated how to deploy Calico egress gateway and test its functionality by peering to an external BGP router. 
 
 
-
- kubectl patch deployment nginx -p '{"spec": {"template":{"metadata":{"annotations":{"sidecar.istio.io/inject":"false"}}}} }'
-
-kubectl patch deployment app2 -n apps -p '{"spec": {"template":{"metadata":{"annotations":{"egress.projectcalico.org/selector":"egress-code == \"app2\""}}}} }'
-
-kubectl patch deployment app2 -n apps -p '{"spec": {"template":{"metadata":{"annotations":{"egress.projectcalico.org/selector":'egress-code == "app2"'}}}} }'
-
-APP2_POD=$(kubectl get pod -n apps --no-headers -o name | grep -i app2 | head -1) && echo $APP2_POD
-kubectl exec -ti $APP2_POD -n apps -- sh
-nc -zv 10.0.1.10 7777
-
-
